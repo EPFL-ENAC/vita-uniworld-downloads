@@ -1,0 +1,73 @@
+# OpenDV YouTube Video Downloads
+
+This job downloads driving videos from YouTube using the [OpenDV tool](https://github.com/OpenDriveLab/DriveAGI/tree/main/opendv) from the DriveAGI project.
+
+## Prerequisites
+
+1. **DriveAGI repository**: The DriveAGI repository should be cloned as a sibling directory to this project:
+   ```bash
+   cd /home/solleder
+   git clone https://github.com/OpenDriveLab/DriveAGI.git
+   ```
+
+2. **Python dependencies**: Install required packages for opendv (typically yt-dlp and other dependencies)
+   ```bash
+   cd DriveAGI/opendv
+   pip install -r requirements.txt
+   ```
+
+3. **Video list**: Create a `videos.txt` file in this directory with one YouTube URL per line:
+   ```bash
+   cd jobs/opendv-youtube
+   nano videos.txt
+   ```
+
+## Setup
+
+1. Create your `videos.txt` file with YouTube URLs (one per line):
+   ```
+   https://www.youtube.com/watch?v=XXXXXXXXXX
+   https://www.youtube.com/watch?v=YYYYYYYYYY
+   https://www.youtube.com/watch?v=ZZZZZZZZZZ
+   ```
+
+2. Adjust the `DRIVEAGI_PATH` in `submit_job.sbatch` if your DriveAGI repository is in a different location.
+
+3. Verify the opendv script command-line interface matches the script. You may need to adjust the download command in the job script based on the actual opendv API.
+
+## Running the Job
+
+To submit the SLURM job:
+
+```bash
+cd jobs/opendv-youtube
+sbatch submit_job.sbatch
+```
+
+## How It Works
+
+1. **Parallel Downloads**: The script splits the video list into 16 chunks and downloads them in parallel
+2. **Automatic Compression**: A background monitor compresses completed video directories into tar files to save inodes
+3. **Resource Management**: Uses 16 CPUs with 32GB RAM for parallel processing
+
+## Output
+
+Downloaded videos will be stored in:
+- **Location**: `/work/vita-uniworld/data/raw/opendv-youtube/`
+- **Format**: Compressed tar files (e.g., `video_id.tar`)
+
+Original directories are removed after successful compression to minimize inode usage.
+
+## Monitoring
+
+Check job progress:
+```bash
+# View output log
+tail -f ../../logs/opendv-youtube-download_JOBID.out
+
+# View error log
+tail -f ../../logs/opendv-youtube-download_JOBID.err
+
+# Check downloads
+ls -lh /work/vita-uniworld/data/raw/opendv-youtube/
+```

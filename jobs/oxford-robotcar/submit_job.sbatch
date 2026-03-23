@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --qos=parallel
+#SBATCH --qos=serial
 
 HOST_DATA_DIR="/work/vita-uniworld/data/raw/oxford-robotcar" 
 NUM_CPUS=16

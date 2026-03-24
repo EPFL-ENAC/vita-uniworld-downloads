@@ -4,40 +4,41 @@ This job downloads driving videos from YouTube using the [OpenDV tool](https://g
 
 ## Prerequisites
 
-1. **DriveAGI repository**: The DriveAGI repository should be cloned as a sibling directory to this project:
+1. **DriveAGI repository**: The DriveAGI repository should be cloned:
    ```bash
    cd /home/solleder
    git clone https://github.com/OpenDriveLab/DriveAGI.git
    ```
 
-2. **Python dependencies**: Install required packages for opendv (typically yt-dlp and other dependencies)
-   ```bash
-   cd DriveAGI/opendv
-   pip install -r requirements.txt
-   ```
-
-3. **Video list**: Create a `videos.txt` file in this directory with one YouTube URL per line:
-   ```bash
-   cd jobs/opendv-youtube
-   nano videos.txt
-   ```
+2. **Metadata files**: Place the OpenDV-YouTube metadata CSV file in the `meta` subfolder:
+   - `jobs/opendv-youtube/meta/OpenDV-YouTube.csv`
+   
+   You can obtain this file [from the DriveAGI repository](https://docs.google.com/spreadsheets/d/1bHWWP_VXeEe5UzIG-QgKFBdH7mNlSC4GFSJkEhFnt2I)
 
 ## Setup
 
-1. Create your `videos.txt` file with YouTube URLs (one per line):
-   ```
-   https://www.youtube.com/watch?v=XXXXXXXXXX
-   https://www.youtube.com/watch?v=YYYYYYYYYY
-   https://www.youtube.com/watch?v=ZZZZZZZZZZ
-   ```
+### Step 1: Prepare Metadata and Environment
 
-2. Adjust the `DRIVEAGI_PATH` in `submit_job.sbatch` if your DriveAGI repository is in a different location.
+Run the preparation script to set up the Python virtual environment and preprocess metadata:
 
-3. Verify the opendv script command-line interface matches the script. You may need to adjust the download command in the job script based on the actual opendv API.
+```bash
+cd jobs/opendv-youtube
+sbatch prepare_metadata.sbatch
+```
 
-## Running the Job
+This script will:
+- Create a Python virtual environment (`opendv_venv/`)
+- Install dependencies from `DriveAGI/opendv/requirements.txt`
+- Run `meta_preprocess.py` to generate `meta/OpenDV-YouTube.json` from the CSV file in `meta/OpenDV-YouTube.csv`
 
-To submit the SLURM job:
+Monitor the preparation job:
+```bash
+tail -f ../../logs/opendv-prepare-metadata_JOBID.out
+```
+
+### Step 2: Run the Download Job
+
+Once metadata preparation is complete, submit the main download job:
 
 ```bash
 cd jobs/opendv-youtube
@@ -46,9 +47,10 @@ sbatch submit_job.sbatch
 
 ## How It Works
 
-1. **Parallel Downloads**: The script splits the video list into 16 chunks and downloads them in parallel
-2. **Automatic Compression**: A background monitor compresses completed video directories into tar files to save inodes
-3. **Resource Management**: Uses 16 CPUs with 32GB RAM for parallel processing
+1. **Metadata Preparation**: The `prepare_metadata.sbatch` script sets up the environment and processes the OpenDV-YouTube metadata CSV into JSON format
+2. **Parallel Downloads**: The main script uses the processed metadata to download videos in parallel (16 workers)
+3. **Automatic Compression**: A background monitor compresses completed video directories into tar files to save inodes
+4. **Resource Management**: Uses 16 CPUs with 32GB RAM for parallel processing
 
 ## Output
 

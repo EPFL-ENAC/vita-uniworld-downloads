@@ -2,21 +2,24 @@
 #SBATCH --job-name=opendv-youtube-download
 #SBATCH --output=../../logs/%x_%j.out
 #SBATCH --error=../../logs/%x_%j.err
-#SBATCH --time=168:00:00
-#SBATCH --mem=32G
+#SBATCH --time=2:00:00
+#SBATCH --mem=6G
 #SBATCH --account=vita-uniworld
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=2
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --qos=serial
+#SBATCH --qos=debug
+
+# Define paths following prepare_metadata.sbatch pattern
+JOB_DIR=$PWD
+OPENDV_DIR="$HOME/DriveAGI/opendv"
+VENV_DIR="$JOB_DIR/opendv_venv"
+DOWNLOAD_SCRIPT="$OPENDV_DIR/scripts/youtube_download.py"
+CONFIG_PATH="$JOB_DIR/configs/download.json"
+JSON_PATH="$JOB_DIR/meta/OpenDV-YouTube.json"
 
 HOST_DATA_DIR="/work/vita-uniworld/data/raw/opendv-youtube"
-NUM_CPUS=16
 COMPRESS_WAIT_TIME=300  # Wait 5 minutes of no activity before compressing a video
-
-# Path to DriveAGI repository (adjust if needed)
-DRIVEAGI_PATH="../../../DriveAGI"
-OPENDV_SCRIPT="$DRIVEAGI_PATH/opendv/scripts/youtube_download.py"
 
 mkdir -p "$HOST_DATA_DIR"
 
@@ -123,69 +126,111 @@ compress_videos() {
     done
 }
 
-# Check if DriveAGI repository exists
-if [ ! -d "$DRIVEAGI_PATH" ]; then
-    echo "Error: DriveAGI repository not found at $DRIVEAGI_PATH"
-    echo "Please clone the repository or adjust DRIVEAGI_PATH variable"
+echo "========================================="
+echo "OpenDV YouTube Download Job"
+echo "========================================="
+echo "Job ID: $SLURM_JOB_ID"
+echo "Node: $SLURM_NODELIST"
+echo "Start time: $(date)"
+echo "========================================="
+
+# Verify OpenDV directory exists
+if [ ! -d "$OPENDV_DIR" ]; then
+    echo "Error: OpenDV directory not found at $OPENDV_DIR"
+    echo "Please ensure DriveAGI is cloned to $HOME/DriveAGI"
     exit 1
 fi
 
-# Check if opendv download script exists
-if [ ! -f "$OPENDV_SCRIPT" ]; then
-    echo "Error: opendv download script not found at $OPENDV_SCRIPT"
+echo "Found OpenDV directory: $OPENDV_DIR"
+
+# Check if download script exists
+if [ ! -f "$DOWNLOAD_SCRIPT" ]; then
+    echo "Error: youtube_download.py not found at $DOWNLOAD_SCRIPT"
     echo "Please verify the path to the DriveAGI/opendv directory"
     exit 1
 fi
 
-# Verify videos.txt exists
-if [ ! -f "videos.txt" ]; then
-    echo "Error: videos.txt not found."
-    echo "Please create a videos.txt file with one YouTube URL per line"
+echo "Found download script: $DOWNLOAD_SCRIPT"
+
+# Verify virtual environment exists
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Error: Virtual environment not found at $VENV_DIR"
+    echo "Please run prepare_metadata.sbatch first to set up the environment"
     exit 1
 fi
 
-# Count total videos
-TOTAL_VIDEOS=$(wc -l < videos.txt)
-echo "Total videos to download: $TOTAL_VIDEOS"
+echo "Found virtual environment: $VENV_DIR"
 
-# Split videos.txt into chunks for parallel processing
-echo "Splitting videos into $NUM_CPUS chunks..."
-mkdir -p chunks
-split -n l/$NUM_CPUS -d videos.txt chunks/videos_chunk_
+# Verify JSON metadata exists
+if [ ! -f "$JSON_PATH" ]; then
+    echo "Error: Metadata JSON not found at $JSON_PATH"
+    echo "Please run prepare_metadata.sbatch first to generate the metadata"
+    exit 1
+fi
+
+echo "Found metadata JSON: $JSON_PATH"
+
+# Verify config file exists
+if [ ! -f "$CONFIG_PATH" ]; then
+    echo "Error: Config file not found at $CONFIG_PATH"
+    exit 1
+fi
+
+echo "Found config file: $CONFIG_PATH"
+
+# Activate virtual environment
+echo "Activating virtual environment..."
+source "$VENV_DIR/bin/activate"
+
+# Create output directory
+mkdir -p "$HOST_DATA_DIR"
+echo "Output directory: $HOST_DATA_DIR"
+
+# Count total videos in JSON
+TOTAL_VIDEOS=$(python3 -c "import json; data=json.load(open('$JSON_PATH')); print(len(data))")
+echo "Total videos in metadata: $TOTAL_VIDEOS"
+
+# Create a temporary config with absolute paths
+TEMP_CONFIG="$JOB_DIR/temp_download_config.json"
+python3 -c "
+import json
+with open('$CONFIG_PATH', 'r') as f:
+    config = json.load(f)
+# Update paths to absolute paths
+config['root'] = '$HOST_DATA_DIR'
+config['video_list'] = '$JSON_PATH'
+config['exception_file'] = '$JOB_DIR/download_exceptions.txt'
+with open('$TEMP_CONFIG', 'w') as f:
+    json.dump(config, f, indent=4)
+"
+
+echo "Created temporary config with absolute paths: $TEMP_CONFIG"
+
+# Change to OpenDV directory (required for script execution)
+cd "$OPENDV_DIR" || exit 1
+echo "Working directory: $(pwd)"
 
 # Start compression monitor in background
 compress_videos "$HOST_DATA_DIR" "$COMPRESS_WAIT_TIME" &
 COMPRESS_PID=$!
 echo "Started compression monitor (PID: $COMPRESS_PID)"
 
-# Run video downloads in parallel on each chunk
-echo "Starting parallel video downloads with $NUM_CPUS workers..."
-DOWNLOAD_PIDS=()
-for i in $(seq -w 0 $((NUM_CPUS - 1))); do
-    CHUNK_FILE="chunks/videos_chunk_$i"
-    if [ -f "$CHUNK_FILE" ]; then
-        echo "Launching worker $i for chunk: $CHUNK_FILE"
-        
-        # Run opendv download script for this chunk
-        # Adjust the command based on actual opendv interface
-        (
-            while IFS= read -r video_url; do
-                [ -z "$video_url" ] && continue
-                echo "Worker $i: Downloading $video_url"
-                python3 "$OPENDV_SCRIPT" --url "$video_url" --output_dir "$HOST_DATA_DIR" || true
-            done < "$CHUNK_FILE"
-        ) &
-        
-        DOWNLOAD_PIDS+=($!)
-    fi
-done
+# Run the download script with config file
+# The script handles parallel downloads internally using num_workers from config
+echo "========================================="
+echo "Starting video downloads..."
+echo "Config: $TEMP_CONFIG"
+echo "Using $TOTAL_VIDEOS videos from $JSON_PATH"
+echo "Output: $HOST_DATA_DIR"
+echo "========================================="
 
-# Wait for all download workers to complete (not compression monitor)
-echo "Waiting for download workers to complete..."
-for pid in "${DOWNLOAD_PIDS[@]}"; do
-    wait $pid
-    echo "Download worker (PID: $pid) completed"
-done
+python3 "$DOWNLOAD_SCRIPT" --config "$TEMP_CONFIG"
+
+DOWNLOAD_EXIT_CODE=$?
+echo "Download script completed with exit code: $DOWNLOAD_EXIT_CODE"
+
+# Clean up temporary config
+rm -f "$TEMP_CONFIG"
 
 # Wait for compression monitor to complete its final sweep
 echo "Waiting for compression monitor to complete..."
@@ -203,6 +248,3 @@ echo "  - Compressed videos: $TAR_COUNT"
 echo "  - Uncompressed videos: $DIR_COUNT"
 echo "  - Total size: $TOTAL_SIZE"
 echo "----------------------------------------"
-
-# Clean up chunk files
-rm -rf chunks

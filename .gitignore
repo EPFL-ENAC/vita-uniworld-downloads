@@ -1,1 +1,17 @@
 logs/
+
+# Python virtual environments
+**/opendv_venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/.venv/
+
+# Job-specific files
+jobs/*/chunks/
+jobs/oxford-robotcar/credentials.env
+jobs/opendv-youtube/videos.txt
+
+# Generated metadata
+jobs/opendv-youtube/meta/*.json
+jobs/opendv-youtube/meta/*.csv

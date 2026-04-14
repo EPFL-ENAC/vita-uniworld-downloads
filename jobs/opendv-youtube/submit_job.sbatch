@@ -15,8 +15,8 @@ JOB_DIR=$PWD
 OPENDV_DIR="$HOME/DriveAGI/opendv"
 VENV_DIR="$JOB_DIR/opendv_venv"
 DOWNLOAD_SCRIPT="$OPENDV_DIR/scripts/youtube_download.py"
-CONFIG_PATH="$JOB_DIR/jobs/opendv-youtube/configs/download.json"
-JSON_PATH="$JOB_DIR/jobs/opendv-youtube/meta/OpenDV-YouTube.json"
+CONFIG_PATH="$JOB_DIR/configs/download.json"
+JSON_PATH="$JOB_DIR/meta/OpenDV-YouTube.json"
 
 HOST_DATA_DIR="/work/vita-uniworld/data/raw/opendv-youtube"
 COMPRESS_WAIT_TIME=300  # Wait 5 minutes of no activity before compressing a video

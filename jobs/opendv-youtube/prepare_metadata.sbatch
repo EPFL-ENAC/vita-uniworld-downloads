@@ -22,10 +22,10 @@ echo "========================================="
 JOB_DIR=$PWD
 OPENDV_DIR="$HOME/DriveAGI/opendv"
 VENV_DIR="$JOB_DIR/opendv_venv"
-REQUIREMENTS_FILE="$OPENDV_DIR/requirements.txt"
+REQUIREMENTS_FILE="$JOB_DIR/jobs/opendv-youtube/requirements.txt"
 META_PREPROCESS_SCRIPT="$OPENDV_DIR/scripts/meta_preprocess.py"
-CSV_PATH="$JOB_DIR/meta/OpenDV-YouTube.csv"
-JSON_PATH="$JOB_DIR/meta/OpenDV-YouTube.json"
+CSV_PATH="$JOB_DIR/jobs/opendv-youtube/meta/OpenDV-YouTube.csv"
+JSON_PATH="$JOB_DIR/jobs/opendv-youtube/meta/OpenDV-YouTube.json"
 
 # Verify DriveAGI/opendv exists
 if [ ! -d "$OPENDV_DIR" ]; then
@@ -49,7 +49,7 @@ fi
 echo "Found requirements.txt"
 
 # Create meta directory if it doesn't exist
-mkdir -p "$JOB_DIR/meta"
+mkdir -p "$JOB_DIR/jobs/opendv-youtube/meta"
 echo "Meta directory: $JOB_DIR/meta"
 
 # Create virtual environment if it doesn't exist

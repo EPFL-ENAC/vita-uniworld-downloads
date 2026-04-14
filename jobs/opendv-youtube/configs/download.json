@@ -2,10 +2,10 @@
     "root": "OpenDV-YouTube/videos",
     "video_list": "meta/OpenDV-YouTube.json",
     "method": "yt-dlp",
-    "format": "bestvideo[height>=720,height<=1080]/best[height>=720,height<=1080]/bestvideo[height>=720]/best[height>=720]",
-    "format_for_ytdlp": "bv*[height<=?1080][height>=720]/b*[height<=?1080][height>=720]",
+    "format": "bestvideo[height<=1080][height>=720]+bestaudio/best[height<=1080][height>=720]",
+    "format_for_ytdlp": "bestvideo[height<=1080][height>=720]+bestaudio/best[height<=1080][height>=720]",
     "num_workers": 1,
     "exception_file": "download_exceptions.txt",
-    "sleep_interval": 5,
-    "max_sleep_interval": 15
+    "sleep_interval": 8,
+    "max_sleep_interval": 20
 }

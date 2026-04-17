@@ -1,6 +1,6 @@
 git+https://github.com/ytdl-org/youtube-dl
-git+https://github.com/yt-dlp/yt-dlp
 
+yt-dlp
 opencv-python
 decord
 tqdm

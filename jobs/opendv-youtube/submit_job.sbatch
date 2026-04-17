@@ -10,6 +10,9 @@
 #SBATCH --ntasks=1
 #SBATCH --qos=debug
 
+# change python version
+module load gcc/13.2.0 python/3.11.7
+
 # Define paths following prepare_metadata.sbatch pattern
 JOB_DIR=$PWD
 OPENDV_DIR="$HOME/DriveAGI/opendv"

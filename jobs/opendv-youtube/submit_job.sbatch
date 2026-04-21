@@ -15,7 +15,7 @@ module load gcc/13.2.0 python/3.11.7
 
 # Define paths following prepare_metadata.sbatch pattern
 JOB_DIR=$PWD
-OPENDV_DIR="$HOME/DriveAGI/opendv"
+OPENDV_DIR="$HOME/vita-uniworld-DriveAGI/opendv"
 VENV_DIR="$JOB_DIR/opendv_venv"
 DOWNLOAD_SCRIPT="$OPENDV_DIR/scripts/youtube_download.py"
 CONFIG_PATH="$JOB_DIR/configs/download.json"

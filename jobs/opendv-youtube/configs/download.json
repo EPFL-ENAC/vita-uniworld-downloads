@@ -6,6 +6,8 @@
     "format_for_ytdlp": "bestvideo[height<=1080][height>=720]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best",
     "num_workers": 1,
     "exception_file": "download_exceptions.txt",
-    "sleep_interval": 8,
-    "max_sleep_interval": 20
+    "download_archive": "downloaded_videos.txt",
+    "sleep_interval": 10,
+    "max_sleep_interval": 20,
+    "sleep_requests": 0.75
 }

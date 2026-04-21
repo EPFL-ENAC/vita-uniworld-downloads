@@ -23,7 +23,7 @@ module load gcc/13.2.0 python/3.11.7
 
 # Define paths
 JOB_DIR=$PWD
-OPENDV_DIR="$HOME/DriveAGI/opendv"
+OPENDV_DIR="$HOME/vita-uniworld-DriveAGI/opendv"
 VENV_DIR="$JOB_DIR/opendv_venv"
 REQUIREMENTS_FILE="$JOB_DIR/requirements.txt"
 META_PREPROCESS_SCRIPT="$OPENDV_DIR/scripts/meta_preprocess.py"
@@ -33,7 +33,7 @@ JSON_PATH="$JOB_DIR/meta/OpenDV-YouTube.json"
 # Verify DriveAGI/opendv exists
 if [ ! -d "$OPENDV_DIR" ]; then
     echo "Error: OpenDV directory not found at $OPENDV_DIR"
-    echo "Please ensure DriveAGI is cloned to $HOME/DriveAGI"
+    echo "Please ensure DriveAGI is cloned to $HOME/vita-uniworld-DriveAGI"
     exit 1
 fi
 
